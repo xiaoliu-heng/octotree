@@ -10,8 +10,9 @@ Browser extension (Chrome, Firefox, Edge, Opera, Safari) that improves GitHub co
 
 ### Learn more:
 
+- [Demo](https://www.youtube.com/watch?v=tyUNy-WFs-c)
 - [User guide](https://www.octotree.io/features)
 - [Browser permissions](https://www.octotree.io/features#browser-permissions)
 - Follow us on [Twitter](https://twitter.com/octotree) for product updates
 
-![Octotree](assets/demo.gif)
+[![Octotree](assets/demo.png)](https://www.youtube.com/watch?v=tyUNy-WFs-c)
