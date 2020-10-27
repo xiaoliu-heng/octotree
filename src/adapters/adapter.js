@@ -20,7 +20,8 @@ class Adapter {
     const folders = {'': []};
     const {path, repo, node} = opts;
 
-    opts.encodedBranch = opts.encodedBranch || encodeURIComponent(decodeURIComponent(repo.branch));
+    opts.encodedBranch =
+      opts.encodedBranch || encodeURIComponent(decodeURIComponent(repo.branch));
 
     this._getTree(path, opts, (err, tree) => {
       if (err) return cb(err);
@@ -64,7 +65,7 @@ class Adapter {
             item.id = NODE_PREFIX + path;
             item.text = name;
             item.li_attr = {
-              title: path
+              title: path,
             };
 
             // Uses `type` as class name for tree node
@@ -73,7 +74,9 @@ class Adapter {
             await octotree.setNodeIconAndText(this, item);
 
             if (item.patch) {
-              item.text += `<span class="octotree-patch">${this.buildPatchHtml(item)}</span>`;
+              item.text += `<span class="octotree-patch">${this.buildPatchHtml(
+                item
+              )}</span>`;
             }
 
             if (node) {
@@ -89,12 +92,12 @@ class Adapter {
               }
 
               // If item is part of a PR, jump to that file's diff
-              if (item.patch && typeof item.patch.diffId === 'number') {
+              if (item.patch) {
                 const url = this._getPatchHref(repo, item.patch);
                 item.a_attr = {
                   href: url,
                   'data-download-url': item.url,
-                  'data-download-filename': name
+                  'data-download-filename': name,
                 };
               } else {
                 // Encodes but retains the slashes, see #274
@@ -102,11 +105,16 @@ class Adapter {
                   .split('/')
                   .map(encodeURIComponent)
                   .join('/');
-                const url = this._getItemHref(repo, type, encodedPath, opts.encodedBranch);
+                const url = this._getItemHref(
+                  repo,
+                  type,
+                  encodedPath,
+                  opts.encodedBranch
+                );
                 item.a_attr = {
                   href: url,
                   'data-download-url': url,
-                  'data-download-filename': name
+                  'data-download-filename': name,
                 };
               }
             } else if (type === 'commit') {
@@ -161,7 +169,7 @@ class Adapter {
         error = 'Invalid token';
         message = await octotree.getInvalidTokenMessage({
           responseStatus: jqXHR.status,
-          requestHeaders: settings.headers
+          requestHeaders: settings.headers,
         });
         break;
       case 404:
@@ -195,7 +203,7 @@ class Adapter {
     cb({
       error: `Error: ${error}`,
       message: message,
-      status: jqXHR.status
+      status: jqXHR.status,
     });
   }
 
@@ -270,7 +278,7 @@ class Adapter {
   selectFile(path) {
     if (!isSafari()) {
       // Smooth scroll to diff file on PR page
-      const diffMatch = path.match(/#diff-\d+$/);
+      const diffMatch = path.match(/#diff-(\d|\w)+$/);
       if (diffMatch) {
         const el = $(diffMatch[0]);
         if (el.length > 0) {
@@ -327,14 +335,32 @@ class Adapter {
    * Return the patch Html for tree item
    */
   buildPatchHtml(treeItem = {}) {
-    const {action, previous, filesChanged: files, additions, deletions} = treeItem.patch;
+    const {
+      action,
+      previous,
+      filesChanged: files,
+      additions,
+      deletions,
+    } = treeItem.patch;
     let patch = '';
     patch += action === 'added' ? '<span class="text-green">added</span>' : '';
-    patch += action === 'renamed' ? `<span class="text-green" title="${previous}">renamed</span>` : '';
-    patch += action === 'removed' ? `<span class="text-red" title="${previous}">removed</span>` : '';
-    patch += files ? `<span class='octotree-patch-files'>${files} ${files === 1 ? 'file' : 'files'}</span>` : '';
-    patch += additions !== 0 ? `<span class="text-green">+${additions}</span>` : '';
-    patch += deletions !== 0 ? `<span class="text-red">-${deletions}</span>` : '';
+    patch +=
+      action === 'renamed'
+        ? `<span class="text-green" title="${previous}">renamed</span>`
+        : '';
+    patch +=
+      action === 'removed'
+        ? `<span class="text-red" title="${previous}">removed</span>`
+        : '';
+    patch += files
+      ? `<span class='octotree-patch-files'>${files} ${
+          files === 1 ? 'file' : 'files'
+        }</span>`
+      : '';
+    patch +=
+      additions !== 0 ? `<span class="text-green">+${additions}</span>` : '';
+    patch +=
+      deletions !== 0 ? `<span class="text-red">-${deletions}</span>` : '';
 
     return patch;
   }
@@ -374,12 +400,17 @@ class Adapter {
 
   _sort(folder) {
     folder.sort((a, b) => {
-      if (a.type === b.type) return a.text === b.text ? 0 : a.text < b.text ? -1 : 1;
+      if (a.type === b.type)
+        return a.text === b.text ? 0 : a.text < b.text ? -1 : 1;
       return a.type === 'blob' ? 1 : -1;
     });
 
     folder.forEach((item) => {
-      if (item.type === 'tree' && item.children !== true && item.children.length > 0) {
+      if (
+        item.type === 'tree' &&
+        item.children !== true &&
+        item.children.length > 0
+      ) {
         this._sort(item.children);
       }
     });
@@ -391,7 +422,11 @@ class Adapter {
     return folder.map((item) => {
       if (item.type === 'tree') {
         item.children = this._collapse(item.children);
-        if (item.children.length === 1 && item.children[0].type === 'tree' && item.a_attr) {
+        if (
+          item.children.length === 1 &&
+          item.children[0].type === 'tree' &&
+          item.a_attr
+        ) {
           const onlyChild = item.children[0];
           const path = item.a_attr['data-download-filename'];
 

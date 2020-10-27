@@ -25,7 +25,10 @@ class GitHub extends PjaxAdapter {
     // Note that couldn't do this in response to URL change, since new DOM via pjax might not be ready.
     const diffModeObserver = new window.MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
-        if (~mutation.oldValue.indexOf('split-diff') || ~mutation.target.className.indexOf('split-diff')) {
+        if (
+          ~mutation.oldValue.indexOf('split-diff') ||
+          ~mutation.target.className.indexOf('split-diff')
+        ) {
           return $(document).trigger(EVENT.LAYOUT_CHANGE);
         }
       });
@@ -34,7 +37,7 @@ class GitHub extends PjaxAdapter {
     diffModeObserver.observe(document.body, {
       attributes: true,
       attributeFilter: ['class'],
-      attributeOldValue: true
+      attributeOldValue: true,
     });
   }
 
@@ -45,7 +48,7 @@ class GitHub extends PjaxAdapter {
 
   // @override
   async shouldLoadEntireTree(repo) {
-    const isLoadingPr = await extStore.get(STORE.PR) && repo.pullNumber;
+    const isLoadingPr = (await extStore.get(STORE.PR)) && repo.pullNumber;
     if (isLoadingPr) {
       return true;
     }
@@ -93,7 +96,7 @@ class GitHub extends PjaxAdapter {
         const $container = $(this);
         const paddingLeft = ($container.innerWidth() - $container.width()) / 2;
         $container.css('margin-left', marginLeft - paddingLeft);
-      })
+      });
     } else {
       $('html').css('margin-left', '');
       $containers.css('margin-left', '');
@@ -102,12 +105,14 @@ class GitHub extends PjaxAdapter {
 
   // @override
   async getRepoFromPath(currentRepo, token, cb) {
-    if (!await octotree.shouldShowOctotree()) {
+    if (!(await octotree.shouldShowOctotree())) {
       return cb();
     }
 
     // (username)/(reponame)[/(type)][/(typeId)]
-    const match = window.location.pathname.match(/([^\/]+)\/([^\/]+)(?:\/([^\/]+))?(?:\/([^\/]+))?/);
+    const match = window.location.pathname.match(
+      /([^\/]+)\/([^\/]+)(?:\/([^\/]+))?(?:\/([^\/]+))?/
+    );
 
     const username = match[1];
     const reponame = match[2];
@@ -117,7 +122,10 @@ class GitHub extends PjaxAdapter {
     const isPR = type === 'pull';
 
     // Not a repository, skip
-    if (~GH_RESERVED_USER_NAMES.indexOf(username) || ~GH_RESERVED_REPO_NAMES.indexOf(reponame)) {
+    if (
+      ~GH_RESERVED_USER_NAMES.indexOf(username) ||
+      ~GH_RESERVED_REPO_NAMES.indexOf(reponame)
+    ) {
       return cb();
     }
 
@@ -141,7 +149,8 @@ class GitHub extends PjaxAdapter {
     const branchNameInTitle = branchDropdownMenuSummary.attr('title');
     const branchNameInSpan = branchDropdownMenuSummary.find('span').text();
     const branchFromSummary =
-      branchNameInTitle && branchNameInTitle.toLowerCase().startsWith('switch branches')
+      branchNameInTitle &&
+      branchNameInTitle.toLowerCase().startsWith('switch branches')
         ? branchNameInSpan
         : branchNameInTitle;
 
@@ -152,22 +161,29 @@ class GitHub extends PjaxAdapter {
       ((type === 'releases' || type === 'tags') && 'master') ||
       // Get commit ID or branch name from the DOM
       branchFromSummary ||
-      ($('.overall-summary .numbers-summary .commits a').attr('href') || '').replace(
-        `/${username}/${reponame}/commits/`,
-        ''
-      ) ||
+      (
+        $('.overall-summary .numbers-summary .commits a').attr('href') || ''
+      ).replace(`/${username}/${reponame}/commits/`, '') ||
       // The above should work for tree|blob, but if DOM changes, fallback to use ID from URL
       ((type === 'tree' || type === 'blob') && typeId) ||
       // Use target branch in a PR page
-      (isPR ? ($('.commit-ref').not('.head-ref').attr('title') || ':').match(/:(.*)/)[1] : null) ||
+      (isPR
+        ? ($('.commit-ref').not('.head-ref').attr('title') || ':').match(
+            /:(.*)/
+          )[1]
+        : null) ||
       // Reuse last selected branch if exist
-      (currentRepo.username === username && currentRepo.reponame === reponame && currentRepo.branch) ||
+      (currentRepo.username === username &&
+        currentRepo.reponame === reponame &&
+        currentRepo.branch) ||
       // Get default branch from cache
       this._defaultBranch[username + '/' + reponame];
 
     const showOnlyChangedInPR = await extStore.get(STORE.PR);
     const pullNumber = isPR && showOnlyChangedInPR ? typeId : null;
-    const pullHead = isPR ? ($('.commit-ref.head-ref').attr('title') || ':').match(/:(.*)/)[1] : null;
+    const pullHead = isPR
+      ? ($('.commit-ref.head-ref').attr('title') || ':').match(/:(.*)/)[1]
+      : null;
     const displayBranch = isPR && pullHead ? `${branch} < ${pullHead}` : null;
     const repo = {username, reponame, branch, displayBranch, pullNumber};
     if (repo.branch) {
@@ -176,7 +192,8 @@ class GitHub extends PjaxAdapter {
       // Still no luck, get default branch for real
       this._get(null, {repo, token}, (err, data) => {
         if (err) return cb(err);
-        repo.branch = this._defaultBranch[username + '/' + reponame] = data.default_branch || 'master';
+        repo.branch = this._defaultBranch[username + '/' + reponame] =
+          data.default_branch || 'master';
         cb(null, repo);
       });
     }
@@ -184,13 +201,19 @@ class GitHub extends PjaxAdapter {
 
   // @override
   loadCodeTree(opts, cb) {
-    opts.encodedBranch = encodeURIComponent(decodeURIComponent(opts.repo.branch));
-    opts.path = (opts.node && (opts.node.sha || opts.encodedBranch)) || opts.encodedBranch + '?recursive=1';
+    opts.encodedBranch = encodeURIComponent(
+      decodeURIComponent(opts.repo.branch)
+    );
+    opts.path =
+      (opts.node && (opts.node.sha || opts.encodedBranch)) ||
+      opts.encodedBranch + '?recursive=1';
     this._loadCodeTreeInternal(opts, null, cb);
   }
 
   get isOnPRPage() {
-    const match = window.location.pathname.match(/([^\/]+)\/([^\/]+)(?:\/([^\/]+))?(?:\/([^\/]+))?/);
+    const match = window.location.pathname.match(
+      /([^\/]+)\/([^\/]+)(?:\/([^\/]+))?(?:\/([^\/]+))?/
+    );
 
     if (!match) return false;
 
@@ -230,26 +253,27 @@ class GitHub extends PjaxAdapter {
       if (err) cb(err);
       else {
         const diffMap = {};
+        const diffIds = Array.from(
+          document.querySelectorAll('div.js-diff-progressive-container > div[id^=diff]')
+        ).map((file)=>file.id.split('-')[1]);
 
+        console.log(diffIds);
         res.forEach((file, index) => {
           // Record file patch info
           diffMap[file.filename] = {
             type: 'blob',
-            diffId: index,
+            diffId: diffIds[index],
             action: file.status,
             additions: file.additions,
             blob_url: file.blob_url,
             deletions: file.deletions,
             filename: file.filename,
             path: file.path,
-            sha: file.sha
+            sha: file.sha,
           };
 
           // Record ancestor folders
-          const folderPath = file.filename
-            .split('/')
-            .slice(0, -1)
-            .join('/');
+          const folderPath = file.filename.split('/').slice(0, -1).join('/');
           const split = folderPath.split('/');
 
           // Aggregate metadata for ancestor folders
@@ -263,7 +287,7 @@ class GitHub extends PjaxAdapter {
                 filename: path,
                 filesChanged: 1,
                 additions: file.additions,
-                deletions: file.deletions
+                deletions: file.deletions,
               };
             } else {
               diffMap[path].additions += file.additions;
@@ -282,7 +306,7 @@ class GitHub extends PjaxAdapter {
             path: fileName,
             sha: patch.sha,
             type: patch.type,
-            url: patch.blob_url
+            url: patch.blob_url,
           };
         });
 
@@ -314,8 +338,14 @@ class GitHub extends PjaxAdapter {
       url = path;
     } else {
       const host =
-        location.protocol + '//' + (location.host === 'github.com' ? 'api.github.com' : location.host + '/api/v3');
-      url = `${host}/repos/${opts.repo.username}/${opts.repo.reponame}${path || ''}`;
+        location.protocol +
+        '//' +
+        (location.host === 'github.com'
+          ? 'api.github.com'
+          : location.host + '/api/v3');
+      url = `${host}/repos/${opts.repo.username}/${opts.repo.reponame}${
+        path || ''
+      }`;
     }
 
     const cfg = {url, method: 'GET', cache: false};
@@ -331,11 +361,15 @@ class GitHub extends PjaxAdapter {
             try {
               const hugeRepos = await extStore.get(STORE.HUGE_REPOS);
               const repo = `${opts.repo.username}/${opts.repo.reponame}`;
-              const repos = Object.keys(hugeRepos).filter((hugeRepoKey) => isValidTimeStamp(hugeRepos[hugeRepoKey]));
+              const repos = Object.keys(hugeRepos).filter((hugeRepoKey) =>
+                isValidTimeStamp(hugeRepos[hugeRepoKey])
+              );
               if (!hugeRepos[repo]) {
                 // If there are too many repos memoized, delete the oldest one
                 if (repos.length >= GH_MAX_HUGE_REPOS_SIZE) {
-                  const oldestRepo = repos.reduce((min, p) => (hugeRepos[p] < hugeRepos[min] ? p : min));
+                  const oldestRepo = repos.reduce((min, p) =>
+                    hugeRepos[p] < hugeRepos[min] ? p : min
+                  );
                   delete hugeRepos[oldestRepo];
                 }
                 hugeRepos[repo] = new Date().getTime();

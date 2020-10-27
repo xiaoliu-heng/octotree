@@ -9,19 +9,36 @@
   "icons": {
     "128": "icons/icon128.png"
   },
-  "permissions": ["https://api.github.com/*", "storage"],
-  "optional_permissions": ["<all_urls>"],
-  "web_accessible_resources": ["*.woff2", "*.png", "*.gif"],
+  "permissions": [
+    "https://api.github.com/*",
+    "storage"
+  ],
+  "optional_permissions": [
+    "<all_urls>"
+  ],
+  "web_accessible_resources": [
+    "*.woff2",
+    "*.png",
+    "*.gif"
+  ],
   "background": {
-    "scripts": ["background.js"],
+    "scripts": [
+      "background.js"
+    ],
     "persistent": true
   },
   "content_scripts": [
     {
-      "run_at": "document_start",
-      "matches": ["https://github.com/*"],
-      "js": ["content.js"],
-      "css": ["content.css"]
+      "run_at": "document_end",
+      "matches": [
+        "https://github.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "css": [
+        "content.css"
+      ]
     }
   ]
 }
